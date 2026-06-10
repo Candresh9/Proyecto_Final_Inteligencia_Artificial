@@ -24,6 +24,11 @@ let isModelTrained = false;
 let learningRate = 0.1;
 let epochs = 500;
 
+// Gráficos (Chart.js)
+let scatterChartInstance = null;
+let costChartInstance = null;
+let costHistory = [];
+
 // UI Tabs
 function switchTab(tabId) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -191,8 +196,70 @@ function processAndSplitData() {
     document.getElementById('predict-warning').style.display = 'none';
     buildPredictionForm();
     
+    // Configurar selectores de gráfico y renderizar
+    const selX = document.getElementById('plot-x');
+    const selY = document.getElementById('plot-y');
+    selX.innerHTML = ''; selY.innerHTML = '';
+    features.forEach((feat) => {
+        selX.options.add(new Option(feat, feat));
+        selY.options.add(new Option(feat, feat));
+    });
+    if (features.length > 1) selY.selectedIndex = 1;
+    document.getElementById('plot-section').style.display = 'block';
+    updateScatterPlot();
+    
     // Ir a pestaña de entrenamiento
     setTimeout(() => switchTab('train'), 800);
+}
+
+function updateScatterPlot() {
+    const featX = document.getElementById('plot-x').value;
+    const featY = document.getElementById('plot-y').value;
+    if(!featX || !featY) return;
+
+    const dataClass0 = [];
+    const dataClass1 = [];
+
+    rawData.forEach(row => {
+        if(row[targetCol] === 1) dataClass1.push({x: row[featX], y: row[featY]});
+        else dataClass0.push({x: row[featX], y: row[featY]});
+    });
+
+    const ctx = document.getElementById('scatterChart').getContext('2d');
+    if(scatterChartInstance) scatterChartInstance.destroy();
+
+    scatterChartInstance = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [
+                {
+                    label: 'Clase 0',
+                    data: dataClass0,
+                    backgroundColor: 'rgba(244, 63, 94, 0.7)',
+                    borderColor: '#f43f5e',
+                    pointRadius: 5
+                },
+                {
+                    label: 'Clase 1',
+                    data: dataClass1,
+                    backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                    borderColor: '#10b981',
+                    pointRadius: 5
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { title: { display: true, text: featX, color: '#9ca3af' }, ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { title: { display: true, text: featY, color: '#9ca3af' }, ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            },
+            plugins: {
+                legend: { labels: { color: '#f3f4f6' } }
+            }
+        }
+    });
 }
 
 function calculateNormalizationStats() {
@@ -246,6 +313,7 @@ function trainLogisticRegression() {
     const Y = trainData.map(row => row[targetCol]);
     
     let finalCost = 0;
+    costHistory = [];
     
     // Loop de Gradiente Descendiente
     for (let epoch = 0; epoch < epochs; epoch++) {
@@ -273,6 +341,7 @@ function trainLogisticRegression() {
         
         cost /= m;
         finalCost = cost;
+        costHistory.push(cost);
         
         // Actualizar parámetros
         for (let j = 0; j < n; j++) modelWeights[j] -= learningRate * (dW[j] / m);
@@ -282,6 +351,8 @@ function trainLogisticRegression() {
     isModelTrained = true;
     document.getElementById('training-results').style.display = 'block';
     document.getElementById('final-cost').innerText = finalCost.toFixed(4);
+    
+    renderCostChart();
     
     // Requisito D: Mostrar e interpretar coeficientes
     renderCoefficients();
@@ -311,6 +382,36 @@ function renderCoefficients() {
             <td style="font-size:0.8rem; color:var(--text-secondary);">${interpretation}</td>
         `;
         tbody.appendChild(tr);
+    });
+}
+
+function renderCostChart() {
+    const ctx = document.getElementById('costChart').getContext('2d');
+    if(costChartInstance) costChartInstance.destroy();
+
+    costChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Array.from({length: epochs}, (_, i) => i+1),
+            datasets: [{
+                label: 'Costo (Log-Loss)',
+                data: costHistory,
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { title: { display: true, text: 'Épocas', color: '#9ca3af' }, ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { title: { display: true, text: 'Costo', color: '#9ca3af' }, ticks: { color: '#9ca3af' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            },
+            plugins: { legend: { display: false } }
+        }
     });
 }
 

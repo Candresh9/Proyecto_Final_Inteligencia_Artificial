@@ -6,6 +6,7 @@
     <title>Clasificación con Regresión Logística - Plataforma Educativa</title>
     <meta name="description" content="Plataforma interactiva para demostrar el flujo completo de clasificación supervisada mediante Regresión Logística.">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -29,7 +30,7 @@
             <nav class="tabs-vertical" id="dashboard-tabs">
                 <button class="tab-btn active" onclick="switchTab('data')" id="btn-tab-data">
                     <span class="tab-number">A, B</span>
-                    1. Datos y Split
+                    1. Datos y Visualización
                 </button>
                 <button class="tab-btn" onclick="switchTab('train')" id="btn-tab-train">
                     <span class="tab-number">C, D</span>
@@ -59,7 +60,7 @@
             
             <!-- Tab 1: Carga de Datos y Split -->
             <div class="tab-pane active" id="pane-data">
-                <h2 class="section-title">A y B. Carga y Separación de Datos</h2>
+                <h2 class="section-title">A y B. Carga y Visualización de Datos</h2>
                 <p class="section-desc">Estructura un problema de clasificación supervisada subiendo un archivo CSV. El modelo predecirá una variable objetivo (Target) basándose en las características (Features).</p>
 
                 <div class="upload-section info-box">
@@ -107,6 +108,20 @@
                             <tbody id="preview-body"></tbody>
                         </table>
                     </div>
+
+                    <div id="plot-section" style="display:none; margin-top: 2rem;">
+                        <h3 style="font-size: 1rem; margin-bottom: 0.5rem; color: var(--accent);">Visualización de Datos (Scatter Plot)</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Elige dos características para graficarlas en 2D. El color representa la clase.</p>
+                        <div style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: center;">
+                            <label style="font-size:0.85rem; color:var(--text-secondary);">Eje X:</label>
+                            <select id="plot-x" class="input-select" onchange="updateScatterPlot()"></select>
+                            <label style="font-size:0.85rem; color:var(--text-secondary);">Eje Y:</label>
+                            <select id="plot-y" class="input-select" onchange="updateScatterPlot()"></select>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: var(--radius-md);">
+                            <canvas id="scatterChart" height="250"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -129,8 +144,15 @@
                 <button class="btn btn-primary" style="margin-top: 1rem;" id="btn-train" onclick="trainLogisticRegression()" disabled>⚡ Entrenar Modelo</button>
 
                 <div id="training-results" style="display:none; margin-top: 1.5rem;">
-                    <div class="info-box success" id="training-status">
+                    <div class="info-box success" id="training-status" style="margin-bottom: 1rem;">
                         ✅ Entrenamiento completado. Coste (Log-Loss) final: <span id="final-cost" style="font-weight:bold;">0.00</span>
+                    </div>
+
+                    <div id="cost-plot-section" style="margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 1rem; margin-bottom: 0.5rem; color: var(--accent);">Curva de Aprendizaje (Log-Loss)</h3>
+                        <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: var(--radius-md);">
+                            <canvas id="costChart" height="100"></canvas>
+                        </div>
                     </div>
 
                     <h3 style="margin-top: 1.5rem; font-size: 1rem; color: var(--accent);">D. Interpretación de Coeficientes</h3>
