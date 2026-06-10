@@ -1,59 +1,32 @@
-# Proyecto Final Inteligencia Artificial - Camilo Hernandez, Fernando Vega y Jesus Jimenez
+# Plataforma Completa de Clasificación (Regresión Logística)
 
-Repositorio destinado al desarrollo del Proyecto Final de la asignatura de Inteligencia Artificial.
+Este repositorio contiene el Proyecto Final de la asignatura de Inteligencia Artificial desarrollado por **Camilo Hernandez, Fernando Vega y Jesus Jimenez**.
 
+La aplicación es una plataforma web interactiva de **Machine Learning** que ejecuta todo su procesamiento (parseo de datos, separación, entrenamiento matemático, predicción) directamente en el navegador del usuario utilizando JavaScript puro, sin requerir un backend.
 
-## Simulador Interactivo de Regresión Lineal y Clasificación
+## Cumplimiento de Objetivos Específicos (Rúbrica)
 
-Este proyecto es una aplicación web interactiva de fines educativos diseñada para explorar y comprender visualmente la **Regresión Lineal**, su relación con los problemas de **Clasificación**, la optimización mediante **Gradiente Descendiente**, y la **evaluación del desempeño** mediante métricas estadísticas estándar.
+La aplicación demuestra la comprensión integral del ciclo de vida de un modelo supervisado:
 
-### Estructura del Proyecto
-
-El simulador está compuesto por los siguientes archivos clave:
-*   [index.html](file:///c:/Users/User/Downloads/Proyecto_Final_Inteligencia_Artificial/index.html): La interfaz de usuario semántica y estructurada.
-*   [style.css](file:///c:/Users/User/Downloads/Proyecto_Final_Inteligencia_Artificial/style.css): Hoja de estilos con diseño responsivo, tema oscuro y estética "glassmorphism".
-*   [app.js](file:///c:/Users/User/Downloads/Proyecto_Final_Inteligencia_Artificial/app.js): Lógica del lienzo interactivo (`<canvas>`), algoritmos de regresión y cálculo de métricas.
-
----
-
-### Conceptos Clave Demostrados
-
-#### 1. Regresión Lineal para Clasificación Binaria
-Aunque la regresión lineal predice valores continuos (una recta $y = mx + b$), se puede utilizar para clasificar estableciendo un **Umbral de Decisión** (por defecto $0.5$).
-*   Cualquier punto cuya predicción caiga por encima o igual al umbral se predice como **Clase 1** (verde).
-*   En caso contrario, se predice como **Clase 0** (rosado).
-*   La **Frontera de Decisión** es la línea vertical discontinua donde el modelo cruza exactamente dicho umbral.
-
-#### 2. El Problema de los Outliers (Valores Atípicos)
-Una de las grandes limitaciones de la regresión lineal para clasificar es que es altamente sensible a valores extremos alejados. 
-*   **Demostración**: En la pestaña **Datos**, selecciona el conjunto **"Con Outliers"**. Observarás cómo dos puntos de la Clase 1 situados muy a la derecha giran significativamente la recta de regresión. Esto desplaza la frontera de decisión hacia la izquierda, haciendo que puntos de la Clase 1 normales ahora sean clasificados incorrectamente como Clase 0.
-*   **Conclusión**: Esto demuestra la necesidad de utilizar funciones sigmoides y modelos como la **Regresión Logística** para problemas de clasificación.
-
-#### 3. Entrenamiento Supervisado: OLS vs. Gradiente Descendiente
-*   **Mínimos Cuadrados (OLS)**: Calcula la solución analítica óptima de manera matemática directa e instantánea.
-*   **Gradiente Descendiente**: Un algoritmo de optimización iterativo que avanza paso a paso en dirección contraria al gradiente de la función de coste. El simulador permite animar este proceso para ver cómo la línea de regresión "aprende" y se ajusta iteración tras iteración según la tasa de aprendizaje ($\alpha$).
-
-#### 4. Evaluación del Desempeño
-*   **Métricas de Regresión**: Se reportan el Error Cuadrático Medio (**MSE**), que mide la suma de los errores al cuadrado, y el coeficiente de determinación (**R²**), que mide qué proporción de la varianza explica el modelo.
-*   **Métricas de Clasificación**: A partir del umbral establecido, se calcula la **Matriz de Confusión** (Verdaderos Positivos, Verdaderos Negativos, Falsos Positivos, Falsos Negativos), junto con la **Precisión (Accuracy)**, **Precisión del clasificador (Precision)**, **Sensibilidad (Recall)** y el **F1-Score**.
+*   **A. Estructuración del Problema:** La pestaña *Datos* permite cargar un dataset real (CSV) y seleccionar dinámicamente qué columna representa el objetivo a clasificar (Target) y cuáles son las características predictoras (Features).
+*   **B. Separación de Datos (Train/Test Split):** Antes del entrenamiento, el sistema baraja (shuffles) y separa el dataset según un porcentaje definido por el usuario (ej. 80% entrenamiento, 20% prueba) para evitar el sobreajuste (overfitting).
+*   **C. Entrenamiento de Regresión Logística:** El modelo se entrena en la pestaña *Entrenamiento* utilizando el algoritmo de **Gradiente Descendiente Multivariable**. Se optimiza la función de pérdida *Log-Loss* (Entropía Cruzada) aplicando la función de activación Sigmoide a la combinación lineal de los datos previamente normalizados mediante *Z-Score*.
+*   **D. Interpretación de Coeficientes:** Una vez finalizado el entrenamiento, el sistema despliega una tabla con los pesos ($W$) aprendidos para cada característica e interpreta automáticamente si influyen positiva o negativamente hacia la clase 1.
+*   **E. Evaluación del Modelo:** En la pestaña *Evaluación*, se calculan las proyecciones del modelo sobre los datos nunca antes vistos (Conjunto de Prueba). Se genera la **Matriz de Confusión** y se derivan métricas como *Accuracy*, *Precision*, *Recall* y *F1-Score*.
+*   **F. Predicción con Nuevos Datos:** La pestaña *Predicciones* lee dinámicamente el esquema de variables del CSV cargado y genera un formulario. Permite introducir nuevos registros manuales, normalizarlos bajo la escala del modelo, y retornar una probabilidad y clasificación final.
+*   **G. Despliegue en la Nube:** Al ser una arquitectura 100% frontend (*Single Page Application* en HTML/CSS/JS), está alojada en **GitHub Pages**. Esto significa que está desplegada de forma estable y accesible públicamente sin requerir mantenimiento de servidores.
+*   **H. Uso de IA Generativa:** Documentado internamente en la pestaña "Documentación IA" de la propia plataforma, donde se especifica que se utilizó Google DeepMind Antigravity como copiloto para estructurar la UI, corregir las matemáticas del gradiente multivariable y afianzar los conceptos matemáticos del estudiante.
 
 ---
 
-### ¿Cómo Ejecutar la Aplicación?
+## Despliegue en la Nube
 
-1.  **Ejecución Directa**:
-    Simplemente abre el archivo [index.html](file:///c:/Users/User/Downloads/Proyecto_Final_Inteligencia_Artificial/index.html) en cualquier navegador web moderno de tu sistema (doble clic en el archivo).
+🔗 **[Visita la aplicación web funcional aquí](https://Candresh9.github.io/Proyecto_Final_Inteligencia_Artificial/)**
+*(Nota: Asegúrate de habilitar GitHub Pages en la rama `main` en la configuración del repositorio).*
 
-2.  **Servidor Local (Opcional)**:
-    Si deseas ejecutar la aplicación a través de un servidor de desarrollo rápido, puedes abrir una terminal en esta carpeta y ejecutar:
-    *   **Python 3**:
-        ```bash
-        python -m http.server 8000
-        ```
-        Luego abre tu navegador en `http://localhost:8000`.
-    *   **Node.js (npx)**:
-        ```bash
-        npx serve .
-        ```
-        Luego abre tu navegador en `http://localhost:3000`.
+## Ejecución Local
 
+Si prefieres ejecutarlo localmente:
+1. Clona el repositorio:
+   `git clone https://github.com/Candresh9/Proyecto_Final_Inteligencia_Artificial.git`
+2. Abre el archivo `index.html` en tu navegador favorito.
