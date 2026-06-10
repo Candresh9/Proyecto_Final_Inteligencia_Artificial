@@ -73,9 +73,10 @@
                     <div style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
                         <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">O selecciona un ejemplo listo para probar:</p>
                         <div style="display: flex; gap: 0.5rem;">
-                            <button class="btn" onclick="loadSampleDataset(1)">Ejemplo 1: Diabetes (Salud)</button>
-                            <button class="btn" onclick="loadSampleDataset(2)">Ejemplo 2: Admisiones Universitarias</button>
+                            <button class="btn" onclick="loadSampleDataset(1)">Ejemplo 1: Diabetes</button>
+                            <button class="btn" onclick="loadSampleDataset(2)">Ejemplo 2: Admisiones</button>
                         </div>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">Carga datos de prueba instantáneamente sin necesidad de subir un archivo de tu computadora.</p>
                     </div>
                 </div>
 
@@ -96,6 +97,7 @@
                     </div>
                     
                     <button class="btn btn-primary" style="margin-top: 1rem;" onclick="processAndSplitData()">Procesar y Separar Datos</button>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">Este botón barajará tus datos aleatoriamente y los dividirá matemáticamente en los conjuntos de Entrenamiento y Prueba. Es un paso fundamental para evitar memorización (Overfitting).</p>
                     
                     <div id="data-summary" class="info-box" style="display:none; margin-top: 1rem;">
                         <!-- Injected by JS -->
@@ -142,6 +144,7 @@
                 </div>
 
                 <button class="btn btn-primary" style="margin-top: 1rem;" id="btn-train" onclick="trainLogisticRegression()" disabled>⚡ Entrenar Modelo</button>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">Inicia el algoritmo iterativo de Gradiente Descendiente. Ajustará los pesos del modelo línea por línea para minimizar el error frente a tus datos.</p>
 
                 <div id="training-results" style="display:none; margin-top: 1.5rem;">
                     <div class="info-box success" id="training-status" style="margin-bottom: 1rem;">
@@ -260,6 +263,7 @@
                     </div>
 
                     <button class="btn btn-primary" style="margin-top: 1rem;" onclick="makePrediction()">Realizar Predicción</button>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">Aplica la ecuación matemática del modelo ya entrenado sobre estos valores ingresados para calcular la probabilidad final.</p>
 
                     <div id="prediction-result" class="metric-card" style="margin-top: 1.5rem; text-align:center; display:none;">
                         <span class="metric-title">Resultado del Modelo</span>
