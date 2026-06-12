@@ -240,39 +240,52 @@ with st.sidebar:
         if uploaded_file is not None:
             try:
                 uploaded_df = pd.read_csv(uploaded_file)
-                # Normalizar nombres de columnas
+                # Normalizar nombres de columnas a mayúsculas para búsqueda flexible
                 cols = [c.upper() for c in uploaded_df.columns]
                 uploaded_df.columns = cols
-                
+
                 # Buscar columnas relevantes
-                col_x = [c for c in cols if 'X' in c or 'FEATURE' in c or 'INPUT' in c]
-                col_y = [c for c in cols if 'Y' in c or 'OUTPUT' in c or 'TARGET_CONT' in c]
-                col_class = [c for c in cols if 'CLASS' in c or 'CLASE' in c or 'LABEL' in c or 'TARGET' in c]
-                
+                col_x = [c for c in cols if "X" in c or "FEATURE" in c or "INPUT" in c]
+                col_y = [c for c in cols if "Y" in c or "OUTPUT" in c or "TARGET_CONT" in c]
+                col_class = [c for c in cols if "CLASS" in c or "CLASE" in c or "LABEL" in c or "TARGET" in c]
+
                 if col_x and col_class:
                     x_name = col_x[0]
                     class_name = col_class[0]
                     y_name = col_y[0] if col_y else class_name
-                    
+
                     df_initial = pd.DataFrame({
                         "X": uploaded_df[x_name].values,
                         "Y": uploaded_df[y_name].values,
                         "Clase": uploaded_df[class_name].values
                     })
+                    # Binzarizar la columna de clase basada en la media
                     df_initial["Clase"] = (df_initial["Clase"] > df_initial["Clase"].mean()).astype(int)
+                    # Escalar X y Y al rango [0,1]
                     for col in ["X", "Y"]:
                         c_min, c_max = df_initial[col].min(), df_initial[col].max()
                         if c_max != c_min:
                             df_initial[col] = (df_initial[col] - c_min) / (c_max - c_min)
                         else:
                             df_initial[col] = 0.5
-                    
+
                     st.session_state.df = df_initial
                     st.session_state.trained = False
                     st.session_state.history = []
                     st.success("CSV cargado con éxito.")
+                    # Mostrar tabla de vista previa
+                    st.subheader("Vista previa del CSV cargado")
+                    st.dataframe(df_initial)
+                    # Botón de descarga del dataset actual (incluye escala y binarización)
+                    csv_bytes = df_initial.to_csv(index=False).encode('utf-8')
+                    st.download_button(
+                        label="💾 Descargar dataset actual",
+                        data=csv_bytes,
+                        file_name="dataset_actual.csv",
+                        mime="text/csv"
+                    )
                 else:
-                    st.error("El CSV debe tener al menos una columna de entrada (X) y una columna objetivo/clase.")
+                    st.error("El CSV debe contener al menos una columna de entrada (X) y una columna de clase/etiqueta.")
             except Exception as e:
                 st.error(f"Error procesando el archivo CSV: {e}")
 
