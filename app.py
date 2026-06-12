@@ -251,6 +251,22 @@ with st.sidebar:
     )
     
     if st.session_state.data_source_selector == "Cargar CSV propio":
+        st.markdown("📥 **Descarga ejemplos listos para probar:**")
+        try:
+            with open("ejemplos_csv/datos_separables.csv", "r", encoding="utf-8") as f:
+                sep_csv = f.read()
+            st.download_button("🟢 Descargar Ejemplo Separable.csv", sep_csv, "datos_separables.csv", "text/csv", use_container_width=True)
+        except Exception:
+            pass
+            
+        try:
+            with open("ejemplos_csv/datos_outliers.csv", "r", encoding="utf-8") as f:
+                out_csv = f.read()
+            st.download_button("🔴 Descargar Ejemplo Outliers.csv", out_csv, "datos_outliers.csv", "text/csv", use_container_width=True)
+        except Exception:
+            pass
+            
+        st.write("---")
         uploaded_file = st.file_uploader("Subir archivo CSV (debe contener columnas X, Y y Clase/Label):", type="csv")
         if uploaded_file is not None:
             try:
