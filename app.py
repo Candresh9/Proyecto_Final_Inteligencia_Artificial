@@ -114,6 +114,21 @@ PRESETS = {
     ])
 }
 
+def change_data_source():
+    src = st.session_state.data_source_selector
+    if src == "Traslapado (Preset)":
+        st.session_state.df = PRESETS["Traslapado"].copy()
+        st.session_state.trained = False
+        st.session_state.history = []
+    elif src == "Generar Aleatorio":
+        np.random.seed(42)
+        x_rand = np.random.uniform(0.1, 0.9, 15)
+        labels_rand = (x_rand + np.random.normal(0, 0.1, 15) > 0.5).astype(int)
+        y_rand = np.where(labels_rand == 1, np.random.uniform(0.5, 0.9, 15), np.random.uniform(0.1, 0.5, 15))
+        st.session_state.df = pd.DataFrame({"X": np.round(x_rand, 3), "Y": np.round(y_rand, 3), "Clase": labels_rand})
+        st.session_state.trained = False
+        st.session_state.history = []
+
 # Inicializar parámetros del modelo
 if "model_m" not in st.session_state:
     st.session_state.model_m = 0.0
@@ -210,38 +225,31 @@ with st.sidebar:
             st.session_state.df = PRESETS["Separable"].copy()
             st.session_state.trained = False
             st.session_state.history = []
+            st.session_state.data_source_selector = "-- Seleccionar opción --"
             st.rerun()
     with col_ex2:
         if st.button("🔴 Ejemplo 2: Outliers", width="stretch", help="Demostración de problemas con outliers"):
             st.session_state.df = PRESETS["Con Outliers"].copy()
             st.session_state.trained = False
             st.session_state.history = []
+            st.session_state.data_source_selector = "-- Seleccionar opción --"
             st.rerun()
 
     # Selector de Conjunto de Datos adicional
     st.subheader("📁 Más Orígenes de Datos")
+    
+    # Inicializar el estado del selector si no existe
+    if "data_source_selector" not in st.session_state:
+        st.session_state.data_source_selector = "-- Seleccionar opción --"
+
     data_source = st.selectbox(
         "Otras fuentes de datos:",
-        ["-- Seleccionar opción --", "Traslapado (Preset)", "Generar Aleatorio", "Cargar CSV propio"]
+        ["-- Seleccionar opción --", "Traslapado (Preset)", "Generar Aleatorio", "Cargar CSV propio"],
+        key="data_source_selector",
+        on_change=change_data_source
     )
     
-    if data_source == "Traslapado (Preset)":
-        st.session_state.df = PRESETS["Traslapado"].copy()
-        st.session_state.trained = False
-        st.session_state.history = []
-        st.rerun()
-    elif data_source == "Generar Aleatorio":
-        # Generar aleatorios controlados
-        np.random.seed(42)
-        x_rand = np.random.uniform(0.1, 0.9, 15)
-        # Separador difuso en x=0.5
-        labels_rand = (x_rand + np.random.normal(0, 0.1, 15) > 0.5).astype(int)
-        y_rand = np.where(labels_rand == 1, np.random.uniform(0.5, 0.9, 15), np.random.uniform(0.1, 0.5, 15))
-        st.session_state.df = pd.DataFrame({"X": np.round(x_rand, 3), "Y": np.round(y_rand, 3), "Clase": labels_rand})
-        st.session_state.trained = False
-        st.session_state.history = []
-        st.rerun()
-    elif data_source == "Cargar CSV propio":
+    if st.session_state.data_source_selector == "Cargar CSV propio":
         uploaded_file = st.file_uploader("Subir archivo CSV (debe contener columnas X, Y y Clase/Label):", type="csv")
         if uploaded_file is not None:
             try:
@@ -265,7 +273,7 @@ with st.sidebar:
                         "Y": uploaded_df[y_name].values,
                         "Clase": uploaded_df[class_name].values
                     })
-                    # Binzarizar la columna de clase basada en la media
+                    # Binarizar la columna de clase basada en la media
                     df_initial["Clase"] = (df_initial["Clase"] > df_initial["Clase"].mean()).astype(int)
                     # Escalar X y Y al rango [0,1]
                     for col in ["X", "Y"]:
@@ -275,15 +283,20 @@ with st.sidebar:
                         else:
                             df_initial[col] = 0.5
 
-                    st.session_state.df = df_initial
-                    st.session_state.trained = False
-                    st.session_state.history = []
-                    st.success("CSV cargado con éxito.")
+                    # Solo actualizar y recargar si es un archivo nuevo
+                    if "last_uploaded_file" not in st.session_state or st.session_state.last_uploaded_file != uploaded_file.name:
+                        st.session_state.df = df_initial
+                        st.session_state.trained = False
+                        st.session_state.history = []
+                        st.session_state.last_uploaded_file = uploaded_file.name
+                        st.success("CSV cargado con éxito.")
+                        st.rerun()
+
                     # Mostrar tabla de vista previa
                     st.subheader("Vista previa del CSV cargado")
-                    st.dataframe(df_initial)
+                    st.dataframe(st.session_state.df)
                     # Botón de descarga del dataset actual (incluye escala y binarización)
-                    csv_bytes = df_initial.to_csv(index=False).encode('utf-8')
+                    csv_bytes = st.session_state.df.to_csv(index=False).encode('utf-8')
                     st.download_button(
                         label="💾 Descargar dataset actual",
                         data=csv_bytes,
@@ -300,6 +313,7 @@ with st.sidebar:
         st.session_state.df = PRESETS["Separable"].copy()
         st.session_state.trained = False
         st.session_state.history = []
+        st.session_state.data_source_selector = "-- Seleccionar opción --"
         st.rerun()
 
     # Configuración de Entrenamiento
