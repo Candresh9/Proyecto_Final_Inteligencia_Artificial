@@ -64,6 +64,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================================
+# CONSTANTES Y CONFIGURACIONES DE COLOR
+# ============================================================================
+COLOR_CLASS_0 = "#f43f5e" # Rosado
+COLOR_CLASS_1 = "#10b981" # Verde
+
+# ============================================================================
 # ESTADO GLOBAL (SESSION STATE)
 # ============================================================================
 PRESETS = {
@@ -404,10 +410,6 @@ with tab_sim:
         fig, ax = plt.subplots(figsize=(8, 6), facecolor="#090d16")
         ax.set_facecolor("#090d16")
         
-        # Configurar colores
-        color_class_0 = "#f43f5e" # Rosado
-        color_class_1 = "#10b981" # Verde
-        
         # Obtener coeficientes actuales
         m_curr = st.session_state.model_m
         b_curr = st.session_state.model_b
@@ -416,7 +418,7 @@ with tab_sim:
         if show_regions and len(df) > 0:
             if abs(m_curr) < 0.0001:
                 # Si la pendiente es casi cero, toda la región es una sola clase
-                bg_color = color_class_1 if b_curr >= threshold else color_class_0
+                bg_color = COLOR_CLASS_1 if b_curr >= threshold else COLOR_CLASS_0
                 ax.axhspan(0, 1, color=bg_color, alpha=0.06)
             else:
                 # Calcular el valor límite x_front donde m*x + b = threshold -> x = (threshold - b) / m
@@ -424,20 +426,20 @@ with tab_sim:
                 
                 if m_curr > 0:
                     if x_front <= 0:
-                        ax.axvspan(0, 1, color=color_class_1, alpha=0.06)
+                        ax.axvspan(0, 1, color=COLOR_CLASS_1, alpha=0.06)
                     elif x_front >= 1:
-                        ax.axvspan(0, 1, color=color_class_0, alpha=0.06)
+                        ax.axvspan(0, 1, color=COLOR_CLASS_0, alpha=0.06)
                     else:
-                        ax.axvspan(0, x_front, color=color_class_0, alpha=0.06)
-                        ax.axvspan(x_front, 1, color=color_class_1, alpha=0.06)
+                        ax.axvspan(0, x_front, color=COLOR_CLASS_0, alpha=0.06)
+                        ax.axvspan(x_front, 1, color=COLOR_CLASS_1, alpha=0.06)
                 else:
                     if x_front <= 0:
-                        ax.axvspan(0, 1, color=color_class_0, alpha=0.06)
+                        ax.axvspan(0, 1, color=COLOR_CLASS_0, alpha=0.06)
                     elif x_front >= 1:
-                        ax.axvspan(0, 1, color=color_class_1, alpha=0.06)
+                        ax.axvspan(0, 1, color=COLOR_CLASS_1, alpha=0.06)
                     else:
-                        ax.axvspan(0, x_front, color=color_class_1, alpha=0.06)
-                        ax.axvspan(x_front, 1, color=color_class_0, alpha=0.06)
+                        ax.axvspan(0, x_front, color=COLOR_CLASS_1, alpha=0.06)
+                        ax.axvspan(x_front, 1, color=COLOR_CLASS_0, alpha=0.06)
                         
         # 2. Cuadrícula
         if show_grid:
@@ -473,8 +475,8 @@ with tab_sim:
                         continue
             
             # Dibujar puntos
-            ax.scatter(df0["X"], df0["Y"], color=color_class_0, s=120, edgecolors="white", linewidth=1.5, zorder=5, label="Clase 0 (Y=0)")
-            ax.scatter(df1["X"], df1["Y"], color=color_class_1, s=120, edgecolors="white", linewidth=1.5, zorder=5, label="Clase 1 (Y=1)")
+            ax.scatter(df0["X"], df0["Y"], color=COLOR_CLASS_0, s=120, edgecolors="white", linewidth=1.5, zorder=5, label="Clase 0 (Y=0)")
+            ax.scatter(df1["X"], df1["Y"], color=COLOR_CLASS_1, s=120, edgecolors="white", linewidth=1.5, zorder=5, label="Clase 1 (Y=1)")
 
         # Configuración estética del plot
         ax.set_xlim(0, 1)
@@ -567,11 +569,11 @@ with tab_train:
                         if abs(m) >= 0.0001:
                             x_front = (threshold - b) / m
                             if m > 0:
-                                ax_anim.axvspan(0, max(0, min(1, x_front)), color=color_class_0, alpha=0.06)
-                                ax_anim.axvspan(max(0, min(1, x_front)), 1, color=color_class_1, alpha=0.06)
+                                ax_anim.axvspan(0, max(0, min(1, x_front)), color=COLOR_CLASS_0, alpha=0.06)
+                                ax_anim.axvspan(max(0, min(1, x_front)), 1, color=COLOR_CLASS_1, alpha=0.06)
                             else:
-                                ax_anim.axvspan(0, max(0, min(1, x_front)), color=color_class_1, alpha=0.06)
-                                ax_anim.axvspan(max(0, min(1, x_front)), 1, color=color_class_0, alpha=0.06)
+                                ax_anim.axvspan(0, max(0, min(1, x_front)), color=COLOR_CLASS_1, alpha=0.06)
+                                ax_anim.axvspan(max(0, min(1, x_front)), 1, color=COLOR_CLASS_0, alpha=0.06)
                                 
                     if show_grid:
                         ax_anim.grid(True, color="#ffffff0d", linestyle="--", linewidth=0.5)
@@ -583,8 +585,8 @@ with tab_train:
                     # Puntos
                     df0 = df[df["Clase"] == 0]
                     df1 = df[df["Clase"] == 1]
-                    ax_anim.scatter(df0["X"], df0["Y"], color=color_class_0, s=80, edgecolors="white", linewidth=1.2, zorder=5)
-                    ax_anim.scatter(df1["X"], df1["Y"], color=color_class_1, s=80, edgecolors="white", linewidth=1.2, zorder=5)
+                    ax_anim.scatter(df0["X"], df0["Y"], color=COLOR_CLASS_0, s=80, edgecolors="white", linewidth=1.2, zorder=5)
+                    ax_anim.scatter(df1["X"], df1["Y"], color=COLOR_CLASS_1, s=80, edgecolors="white", linewidth=1.2, zorder=5)
                     
                     ax_anim.set_xlim(0, 1)
                     ax_anim.set_ylim(0, 1)
