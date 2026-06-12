@@ -12,7 +12,7 @@ import json
 # ============================================================================
 st.set_page_config(
     page_title="Regresión vs Clasificación - Plataforma Educativa",
-    page_icon="📊",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -250,10 +250,10 @@ if "multi_threshold" not in st.session_state:
 # ============================================================================
 # SELECTOR DE MÓDULO PRINCIPAL
 # ============================================================================
-st.sidebar.title("📚 Navegación")
+st.sidebar.title("Navegación")
 app_mode = st.sidebar.radio(
     "Selecciona el Módulo a ejecutar:",
-    ["📊 Módulo 1: Simulador 2D", "🧬 Módulo 2: Regresión Logística Multivariable"],
+    ["Módulo 1: Simulador 2D", "Módulo 2: Regresión Logística Multivariable"],
     index=0
 )
 
@@ -262,7 +262,7 @@ st.sidebar.markdown("---")
 # ============================================================================
 # MÓDULO 1: SIMULADOR 2D (REGRESIÓN LINEAL VS CLASIFICACIÓN)
 # ============================================================================
-if app_mode == "📊 Módulo 1: Simulador 2D":
+if app_mode == "Módulo 1: Simulador 2D":
 
     def load_separable():
         st.session_state.df = PRESETS["Separable"].copy()
@@ -349,7 +349,7 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
             "accuracy": accuracy, "precision": precision, "recall": recall, "f1": f1
         }
 
-    st.title("📊 Plataforma Educativa: Regresión Lineal vs Clasificación")
+    st.title("Plataforma Educativa: Regresión Lineal vs Clasificación")
     st.markdown(
         "Esta plataforma interactiva permite explorar el funcionamiento de la **Regresión Lineal** aplicada a problemas de **Clasificación Binaria**, "
         "analizando sus limitaciones con outliers y la importancia del umbral de decisión."
@@ -357,19 +357,19 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
 
     # Barra lateral del Módulo 1
     with st.sidebar:
-        st.header("⚙️ Configuración 2D")
+        st.header("Configuración 2D")
         
         if "df" not in st.session_state:
             st.session_state.df = PRESETS["Separable"].copy()
 
-        st.subheader("🚀 Ejemplos Didácticos")
+        st.subheader("Ejemplos Didácticos")
         col_ex1, col_ex2 = st.columns(2)
         with col_ex1:
-            st.button("🟢 Ejemplo 1: Separable", use_container_width=True, help="Caso ideal de regresión lineal", on_click=load_separable)
+            st.button("Ejemplo 1: Separable", use_container_width=True, help="Caso ideal de regresión lineal", on_click=load_separable)
         with col_ex2:
-            st.button("🔴 Ejemplo 2: Outliers", use_container_width=True, help="Demostración de problemas con outliers", on_click=load_outliers)
+            st.button("Ejemplo 2: Outliers", use_container_width=True, help="Demostración de problemas con outliers", on_click=load_outliers)
 
-        st.subheader("📁 Más Orígenes de Datos")
+        st.subheader("Más Orígenes de Datos")
         if "data_source_selector" not in st.session_state:
             st.session_state.data_source_selector = "-- Seleccionar opción --"
 
@@ -381,18 +381,18 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
         )
         
         if st.session_state.data_source_selector == "Cargar CSV propio":
-            st.markdown("📥 **Descarga ejemplos listos para probar:**")
+            st.markdown("**Descarga ejemplos listos para probar:**")
             try:
                 with open("ejemplos_csv/datos_separables.csv", "r", encoding="utf-8") as f:
                     sep_csv = f.read()
-                st.download_button("🟢 Descargar Ejemplo Separable.csv", sep_csv, "datos_separables.csv", "text/csv", use_container_width=True)
+                st.download_button("Descargar Ejemplo Separable.csv", sep_csv, "datos_separables.csv", "text/csv", use_container_width=True)
             except Exception:
                 pass
                 
             try:
                 with open("ejemplos_csv/datos_outliers.csv", "r", encoding="utf-8") as f:
                     out_csv = f.read()
-                st.download_button("🔴 Descargar Ejemplo Outliers.csv", out_csv, "datos_outliers.csv", "text/csv", use_container_width=True)
+                st.download_button("Descargar Ejemplo Outliers.csv", out_csv, "datos_outliers.csv", "text/csv", use_container_width=True)
             except Exception:
                 pass
                 
@@ -438,7 +438,7 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
                         st.dataframe(st.session_state.df)
                         csv_bytes = st.session_state.df.to_csv(index=False).encode('utf-8')
                         st.download_button(
-                            label="💾 Descargar dataset actual",
+                            label="Descargar dataset actual",
                             data=csv_bytes,
                             file_name="dataset_actual.csv",
                             mime="text/csv",
@@ -449,9 +449,9 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
                 except Exception as e:
                     st.error(f"Error procesando el archivo CSV: {e}")
 
-        st.sidebar.button("🔄 Reiniciar Datos a Separables", use_container_width=True, on_click=load_separable)
+        st.sidebar.button("Reiniciar Datos a Separables", use_container_width=True, on_click=load_separable)
 
-        st.subheader("⚡ Entrenamiento del Modelo")
+        st.subheader("Entrenamiento del Modelo")
         method = st.radio("Método de optimización:", ["Mínimos Cuadrados (OLS)", "Descenso de Gradiente (GD)"])
         
         gd_lr = 0.05
@@ -460,19 +460,19 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
             gd_lr = st.slider("Tasa de aprendizaje (α):", 0.001, 0.500, 0.050, 0.001)
             gd_epochs = st.slider("Iteraciones (Épocas):", 10, 1000, 100, 10)
 
-        st.subheader("🎯 Clasificación")
+        st.subheader("Clasificación")
         threshold = st.slider("Umbral de decisión (T):", 0.00, 1.00, 0.50, 0.01)
 
-        st.subheader("🎨 Opciones de Visualización")
+        st.subheader("Opciones de Visualización")
         show_grid = st.checkbox("Mostrar Cuadrícula", value=True)
         show_residuals = st.checkbox("Mostrar Residuales (Errores)", value=True)
         show_regions = st.checkbox("Mostrar Regiones de Clasificación", value=True)
 
     tab_sim, tab_train, tab_eval, tab_docs = st.tabs([
-        "🎮 Simulador e Interactividad",
-        "⚡ Entrenamiento en Tiempo Real",
-        "📊 Evaluación de Desempeño",
-        "📘 Conceptos y Documentación"
+        "Simulador e Interactividad",
+        "Entrenamiento en Tiempo Real",
+        "Evaluación de Desempeño",
+        "Conceptos y Documentación"
     ])
 
     df = st.session_state.df
@@ -482,7 +482,7 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
         col_main, col_edit = st.columns([2, 1])
         
         with col_edit:
-            st.subheader("📝 Gestión de Puntos")
+            st.subheader("Gestión de Puntos")
             st.markdown(
                 "Puedes añadir nuevos registros al final de la tabla, modificar las coordenadas de X e Y "
                 "(rango `0` a `1`) o alterar la clase (`0` para clase Rosada, `1` para clase Verde)."
@@ -506,10 +506,10 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
                 st.session_state.history = []
                 st.rerun()
                 
-            st.info("💡 **Consejo:** Modifica la tabla para simular distribuciones específicas, luego haz clic en '⚡ Entrenar Modelo'.")
+            st.info("**Consejo:** Modifica la tabla para simular distribuciones específicas, luego haz clic en 'Entrenar Modelo'.")
             
             st.write("---")
-            st.subheader("➕ Añadir Punto Rápido")
+            st.subheader("Añadir Punto Rápido")
             with st.form("add_point_form", clear_on_submit=True):
                 new_x = st.slider("Coordenada X:", 0.0, 1.0, 0.5, 0.01)
                 new_y = st.slider("Coordenada Y:", 0.0, 1.0, 0.5, 0.01)
@@ -523,7 +523,7 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
                     st.toast(f"Punto ({new_x:.2f}, {new_y:.2f}) de Clase {new_class} añadido.")
                     st.rerun()
 
-            if st.button("⚡ Entrenar Modelo", type="primary", use_container_width=True):
+            if st.button("Entrenar Modelo", type="primary", use_container_width=True):
                 if len(df) < 2:
                     st.error("Por favor, ingresa al menos 2 puntos para comenzar el entrenamiento.")
                 else:
@@ -557,7 +557,7 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
                     st.rerun()
 
         with col_main:
-            st.subheader("📈 Visualización del Plano Cartesiano")
+            st.subheader("Visualización del Plano Cartesiano")
             
             m_curr = st.session_state.model_m
             b_curr = st.session_state.model_b
@@ -694,22 +694,22 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
 
     # PESTAÑA 2: ANIMACIÓN GD
     with tab_train:
-        st.subheader("⏳ Animación de Convergencia del Gradiente Descendiente")
+        st.subheader("Animación de Convergencia del Gradiente Descendiente")
         st.markdown(
             "Al utilizar **Descenso de Gradiente (GD)**, puedes observar cómo el modelo actualiza iterativamente "
             "la pendiente ($m$) y la intersección ($b$) en cada época para minimizar el error de coste (MSE)."
         )
         
         if method != "Descenso de Gradiente (GD)":
-            st.info("ℹ️ Para ver la animación en tiempo real, selecciona el método 'Descenso de Gradiente (GD)' en la barra lateral.")
+            st.info("Para ver la animación en tiempo real, selecciona el método 'Descenso de Gradiente (GD)' en la barra lateral.")
         elif len(df) < 2:
             st.warning("Agrega al menos 2 puntos en la pestaña anterior para poder entrenar el modelo.")
         else:
             col_ctrl, col_graph = st.columns([1, 2])
             
             with col_ctrl:
-                st.write("📊 **Control del Entrenamiento**")
-                btn_play = st.button("▶️ Iniciar Animación de GD", use_container_width=True)
+                st.write("**Control del Entrenamiento**")
+                btn_play = st.button("Iniciar Animación de GD", use_container_width=True)
                 
                 status_txt = st.empty()
                 params_txt = st.empty()
@@ -869,11 +869,11 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
                 st.session_state.model_b = b
                 st.session_state.trained = True
                 st.session_state.history = [{"epoch": ep, "mse": ms} for ep, ms in zip(epochs_list, mse_history)]
-                status_txt.success("🎉 **¡Entrenamiento completado!** Los parámetros se han actualizado.")
+                status_txt.success("**¡Entrenamiento completado!** Los parámetros se han actualizado.")
 
     # PESTAÑA 3: EVALUACIÓN
     with tab_eval:
-        st.subheader("📊 Métricas Estadísticas del Modelo")
+        st.subheader("Métricas Estadísticas del Modelo")
         st.markdown(
             "Al aplicar Regresión Lineal para Clasificación, analizamos la cercanía del ajuste continuo (Métricas de Regresión) "
             "y la calidad de la decisión final (Métricas de Clasificación)."
@@ -928,7 +928,7 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
             col_reg, col_class = st.columns([1, 1])
             
             with col_reg:
-                st.write("📈 **Métricas del Ajuste Lineal**")
+                st.write("**Métricas del Ajuste Lineal**")
                 st.info(f"**Error Cuadrático Medio (MSE):** `{metrics['mse']:.5f}`")
                 st.info(f"**Coeficiente de Determinación (R²):** `{metrics['r2']:.4f}`")
                 st.markdown(
@@ -937,7 +937,7 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
                 )
                 
             with col_class:
-                st.write("🧩 **Matriz de Confusión**")
+                st.write("**Matriz de Confusión**")
                 
                 matrix_data = pd.DataFrame(
                     [[metrics['tn'], metrics['fp']], [metrics['fn'], metrics['tp']]],
@@ -955,10 +955,10 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
 
     # PESTAÑA 4: DOCUMENTACIÓN Y MARCO TEÓRICO
     with tab_docs:
-        st.subheader("📘 Marco Teórico y Limitaciones de la Regresión Lineal")
+        st.subheader("Marco Teórico y Limitaciones de la Regresión Lineal")
         st.markdown(
             r"""
-            ### ⚖️ Regresión Lineal para Clasificación Binaria
+            ### Regresión Lineal para Clasificación Binaria
             La regresión lineal clásica busca encontrar una recta de la forma:
             
             $$\hat{y} = mx + b$$
@@ -973,7 +973,7 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
             
             ---
             
-            ### ⚠️ El Impacto de los Outliers (El Problema de la Recta)
+            ### El Impacto de los Outliers (El Problema de la Recta)
             Aunque la regresión lineal puede funcionar para clasificar cuando los datos son perfectamente separables y balanceados, sufre gravemente ante la presencia de **valores atípicos (outliers)**.
             
             **¿Por qué sucede esto?**
@@ -986,7 +986,7 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
             
             ---
             
-            ### 🧠 Integrantes del Proyecto
+            ### Integrantes del Proyecto
             *   **Camilo Hernandez**
             *   **Fernando Vega**
             *   **Jesus Jimenez**
@@ -999,7 +999,7 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
 # MÓDULO 2: CLASIFICACIÓN MULTIVARIABLE (REGRESIÓN LOGÍSTICA)
 # ============================================================================
 else:
-    st.title("🧬 Regresión Logística Multivariable")
+    st.title("Regresión Logística Multivariable")
     st.markdown(
         "Este módulo permite procesar conjuntos de datos arbitrarios con múltiples variables (Features) "
         "para clasificar una etiqueta binaria (Target) mediante **Regresión Logística**. Implementa normalización, "
@@ -1008,7 +1008,7 @@ else:
 
     # BARRA LATERAL MÓDULO 2
     with st.sidebar:
-        st.header("⚙️ Datos y Parámetros")
+        st.header("Datos y Parámetros")
         
         multi_data_source = st.selectbox(
             "Origen del Conjunto de Datos:",
@@ -1062,7 +1062,7 @@ else:
             st.session_state.multi_split = split_val / 100.0
             
             # Botón procesar
-            if st.button("🔄 Procesar y Dividir Datos", use_container_width=True):
+            if st.button("Procesar y Dividir Datos", use_container_width=True):
                 if len(features_vars) == 0:
                     st.error("Debes seleccionar al menos una característica (Feature).")
                 else:
@@ -1088,13 +1088,13 @@ else:
                     st.rerun()
 
         # Entrenamiento de Regresión Logística
-        st.subheader("⚡ Entrenamiento del Modelo")
+        st.subheader("Entrenamiento del Modelo")
         multi_lr = st.slider("Tasa de aprendizaje (α):", 0.001, 1.000, 0.100, 0.001, format="%.3f")
         multi_epochs = st.slider("Iteraciones (Épocas):", 10, 5000, 1000, 10)
 
         # Botón entrenar
         if st.session_state.multi_train_df is not None:
-            if st.button("🔥 Entrenar Regresión Logística", type="primary", use_container_width=True):
+            if st.button("Entrenar Regresión Logística", type="primary", use_container_width=True):
                 train_data = st.session_state.multi_train_df
                 features = st.session_state.multi_features
                 target = st.session_state.multi_target
@@ -1122,11 +1122,11 @@ else:
         else:
             st.info("Primero procesa los datos para habilitar el entrenamiento.")
 
-        st.subheader("🎯 Umbral de Clasificación")
+        st.subheader("Umbral de Clasificación")
         st.session_state.multi_threshold = st.slider("Umbral de Decisión (T):", 0.00, 1.00, 0.50, 0.01, key="threshold_multi_slider")
 
         # Importar Modelo
-        st.subheader("📥 Importar Modelo JSON")
+        st.subheader("Importar Modelo JSON")
         model_file = st.file_uploader("Cargar archivo de modelo (.json):", type=["json"])
         if model_file is not None:
             try:
@@ -1152,10 +1152,10 @@ else:
 
     # PESTAÑAS DEL MÓDULO 2
     tab_data_multi, tab_train_multi, tab_eval_multi, tab_pred_multi = st.tabs([
-        "📁 1. Carga y Configuración de Datos",
-        "⚡ 2. Entrenamiento del Modelo",
-        "📊 3. Evaluación de Desempeño",
-        "🔮 4. Predicción Interactiva"
+        "1. Carga y Configuración de Datos",
+        "2. Entrenamiento del Modelo",
+        "3. Evaluación de Desempeño",
+        "4. Predicción Interactiva"
     ])
 
     # PESTAÑA 1: CARGA Y CONFIGURACIÓN DE DATOS
@@ -1172,14 +1172,14 @@ else:
             
             if st.session_state.multi_train_df is not None:
                 st.info(
-                    f"✅ **Datos procesados e indexados:**\n"
+                    f"**Datos procesados e indexados:**\n"
                     f"*   **Variable Target:** `{st.session_state.multi_target}`\n"
                     f"*   **Variables Features:** `{', '.join(st.session_state.multi_features)}`\n"
                     f"*   **Registros de Entrenamiento (Train):** `{len(st.session_state.multi_train_df)}` muestras\n"
                     f"*   **Registros de Prueba (Test):** `{len(st.session_state.multi_test_df)}` muestras"
                 )
                 
-                st.subheader("📈 Gráfico de Dispersión Interactivo (Features)")
+                st.subheader("Gráfico de Dispersión Interactivo (Features)")
                 st.write("Visualiza la distribución de tus datos eligiendo dos características:")
                 col_sel_x, col_sel_y = st.columns(2)
                 with col_sel_x:
@@ -1299,7 +1299,7 @@ else:
             st.info(f"**Costo final en la última época:** `{cost_history[-1]:.5f}`")
 
             st.write("---")
-            st.subheader("⚖️ Coeficientes y Pesos del Modelo")
+            st.subheader("Coeficientes y Pesos del Modelo")
             st.markdown("Pesos entrenados para cada variable predictora (Features) y sesgo del modelo:")
             
             features = st.session_state.multi_features
@@ -1327,7 +1327,7 @@ else:
 
             # Exportar Modelo JSON
             st.write("---")
-            st.subheader("💾 Exportar Modelo Entrenado")
+            st.subheader("Exportar Modelo Entrenado")
             st.markdown("Guarda el estado actual del modelo (pesos, bias, variables y estadísticas) en un archivo JSON local.")
             
             # Construir JSON
@@ -1345,7 +1345,7 @@ else:
             json_str = json.dumps(export_data, indent=2)
             
             st.download_button(
-                label="💾 Descargar Modelo (.json)",
+                label="Descargar Modelo (.json)",
                 data=json_str,
                 file_name=f"modelo_logistico_{st.session_state.multi_target}.json",
                 mime="application/json",
@@ -1427,7 +1427,7 @@ else:
                 
             col_l, col_r = st.columns([1, 1])
             with col_l:
-                st.subheader("🧩 Matriz de Confusión (Set Prueba)")
+                st.subheader("Matriz de Confusión (Set Prueba)")
                 matrix_data_multi = pd.DataFrame(
                     [[tn, fp], [fn, tp]],
                     columns=["Predicción 0", "Predicción 1"],
@@ -1442,7 +1442,7 @@ else:
                 )
                 
             with col_r:
-                st.subheader("📈 Curva ROC y Desempeño AUC")
+                st.subheader("Curva ROC y Desempeño AUC")
                 fpr_list, tpr_list, auc_val = calculate_roc_auc(y_test, probs)
                 
                 fig_roc = go.Figure()
@@ -1477,7 +1477,7 @@ else:
         if not st.session_state.multi_trained:
             st.warning("Entrena el modelo en la barra lateral para habilitar la predicción interactiva.")
         else:
-            st.subheader("🔮 Clasificar Nueva Muestra")
+            st.subheader("Clasificar Nueva Muestra")
             st.markdown(
                 "Introduce los valores numéricos crudos para las variables predictoras elegidas "
                 "y el modelo calculará la probabilidad logística en tiempo real."
@@ -1500,7 +1500,7 @@ else:
                     default_input_val = float(stats[col]["mean"])
                     pred_inputs[col] = st.number_input(f"Valor para {col}:", value=default_input_val, format="%.4f")
                     
-            if st.button("🔮 Estimar Clase", type="primary", use_container_width=True):
+            if st.button("Estimar Clase", type="primary", use_container_width=True):
                 # Normalizar entradas
                 X_single = np.zeros(len(features))
                 for idx, col in enumerate(features):
