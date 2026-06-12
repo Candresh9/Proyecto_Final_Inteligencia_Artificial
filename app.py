@@ -264,6 +264,18 @@ st.sidebar.markdown("---")
 # ============================================================================
 if app_mode == "📊 Módulo 1: Simulador 2D":
 
+    def load_separable():
+        st.session_state.df = PRESETS["Separable"].copy()
+        st.session_state.trained = False
+        st.session_state.history = []
+        st.session_state.data_source_selector = "-- Seleccionar opción --"
+
+    def load_outliers():
+        st.session_state.df = PRESETS["Con Outliers"].copy()
+        st.session_state.trained = False
+        st.session_state.history = []
+        st.session_state.data_source_selector = "-- Seleccionar opción --"
+
     def change_data_source():
         src = st.session_state.data_source_selector
         if src == "Traslapado (Preset)":
@@ -353,19 +365,9 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
         st.subheader("🚀 Ejemplos Didácticos")
         col_ex1, col_ex2 = st.columns(2)
         with col_ex1:
-            if st.button("🟢 Ejemplo 1: Separable", use_container_width=True, help="Caso ideal de regresión lineal"):
-                st.session_state.df = PRESETS["Separable"].copy()
-                st.session_state.trained = False
-                st.session_state.history = []
-                st.session_state.data_source_selector = "-- Seleccionar opción --"
-                st.rerun()
+            st.button("🟢 Ejemplo 1: Separable", use_container_width=True, help="Caso ideal de regresión lineal", on_click=load_separable)
         with col_ex2:
-            if st.button("🔴 Ejemplo 2: Outliers", use_container_width=True, help="Demostración de problemas con outliers"):
-                st.session_state.df = PRESETS["Con Outliers"].copy()
-                st.session_state.trained = False
-                st.session_state.history = []
-                st.session_state.data_source_selector = "-- Seleccionar opción --"
-                st.rerun()
+            st.button("🔴 Ejemplo 2: Outliers", use_container_width=True, help="Demostración de problemas con outliers", on_click=load_outliers)
 
         st.subheader("📁 Más Orígenes de Datos")
         if "data_source_selector" not in st.session_state:
@@ -447,12 +449,7 @@ if app_mode == "📊 Módulo 1: Simulador 2D":
                 except Exception as e:
                     st.error(f"Error procesando el archivo CSV: {e}")
 
-        if st.sidebar.button("🔄 Reiniciar Datos a Separables", use_container_width=True):
-            st.session_state.df = PRESETS["Separable"].copy()
-            st.session_state.trained = False
-            st.session_state.history = []
-            st.session_state.data_source_selector = "-- Seleccionar opción --"
-            st.rerun()
+        st.sidebar.button("🔄 Reiniciar Datos a Separables", use_container_width=True, on_click=load_separable)
 
         st.subheader("⚡ Entrenamiento del Modelo")
         method = st.radio("Método de optimización:", ["Mínimos Cuadrados (OLS)", "Descenso de Gradiente (GD)"])
