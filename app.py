@@ -449,7 +449,7 @@ with tab_sim:
             # Dibujar residuales primero para que queden de fondo
             if show_residuals:
                 for idx, row in df.iterrows():
-                    pred_y = m_curr * row["X"] + b_curr
+                    pred_y = m_curr * float(row["X"]) + b_curr
                     ax.plot([row["X"], row["X"]], [row["Y"], pred_y], color="#ffffff4d", linestyle=":", linewidth=1.2)
                     
             # Dibujar puntos
