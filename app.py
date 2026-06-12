@@ -880,22 +880,22 @@ with tab_docs:
     
     st.markdown(
         r"""
-        ### ⚖️ Regresión Lineal para Clasificación Binaria
+        ### Regresión Lineal para Clasificación Binaria
         La regresión lineal clásica busca encontrar una recta de la forma:
         
         $$\hat{y} = mx + b$$
         
         Que minimice el **Error Cuadrático Medio (MSE)** sobre el conjunto de entrenamiento:
         
-        $$MSE = \\frac{1}{N} \\sum_{i=1}^{N} (y_i - \\hat{y}_i)^2$$
+        $$MSE = \frac{1}{N} \sum_{i=1}^{N} (y_i - \hat{y}_i)^2$$
         
         Para usarla como clasificador binario, proyectamos el resultado de la recta y lo evaluamos contra un **umbral de decisión ($T$)**:
         
-        $$\\text{Clase Predicha} = \\begin{cases} 1 & \\text{si } \\hat{y} \\ge T \\\\ 0 & \\text{si } \\hat{y} < T \\end{cases}$$
+        $$\text{Clase Predicha} = \begin{cases} 1 & \text{si } \hat{y} \ge T \\ 0 & \text{si } \hat{y} < T \end{cases}$$
         
         ---
         
-        ### ⚠️ El Impacto de los Outliers (El Problema de la Recta)
+        ### El Impacto de los Outliers (El Problema de la Recta)
         Aunque la regresión lineal puede funcionar para clasificar cuando los datos son perfectamente separables y balanceados, sufre gravemente ante la presencia de **valores atípicos (outliers)**.
         
         **¿Por qué sucede esto?**
