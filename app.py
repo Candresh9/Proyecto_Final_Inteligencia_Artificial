@@ -436,6 +436,10 @@ with tab_sim:
     with col_main:
         st.subheader("📈 Visualización del Plano Cartesiano")
         
+        # Obtener coeficientes actuales
+        m_curr = st.session_state.model_m
+        b_curr = st.session_state.model_b
+
         # Graficador interactivo de Plotly
         fig = go.Figure()
         
