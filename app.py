@@ -267,6 +267,8 @@ if "multi_trained" not in st.session_state:
     st.session_state.multi_trained = False
 if "multi_threshold" not in st.session_state:
     st.session_state.multi_threshold = 0.50
+if "multi_train_message" not in st.session_state:
+    st.session_state.multi_train_message = None
 
 
 # ============================================================================
@@ -1040,23 +1042,67 @@ else:
         # Cargar datos
         df_loaded = None
         if multi_data_source == "Diabetes (Salud - Preset)":
-            df_loaded = pd.read_csv(io.StringIO(CSV_DIABETES))
-            st.session_state.multi_df = df_loaded
-            st.session_state.multi_trained = False
+            if "last_multi_source" not in st.session_state or st.session_state.last_multi_source != "Diabetes":
+                df_loaded = pd.read_csv(io.StringIO(CSV_DIABETES))
+                st.session_state.multi_df = df_loaded
+                st.session_state.multi_trained = False
+                st.session_state.multi_train_df = None
+                st.session_state.multi_test_df = None
+                st.session_state.multi_feature_stats = {}
+                st.session_state.multi_train_message = None
+                st.session_state.last_multi_source = "Diabetes"
         elif multi_data_source == "Admisiones Universitarias (Preset)":
-            df_loaded = pd.read_csv(io.StringIO(CSV_ADMITIDOS))
-            st.session_state.multi_df = df_loaded
-            st.session_state.multi_trained = False
+            if "last_multi_source" not in st.session_state or st.session_state.last_multi_source != "Admisiones":
+                df_loaded = pd.read_csv(io.StringIO(CSV_ADMITIDOS))
+                st.session_state.multi_df = df_loaded
+                st.session_state.multi_trained = False
+                st.session_state.multi_train_df = None
+                st.session_state.multi_test_df = None
+                st.session_state.multi_feature_stats = {}
+                st.session_state.multi_train_message = None
+                st.session_state.last_multi_source = "Admisiones"
         elif multi_data_source == "Cargar CSV propio":
             uploaded_file = st.file_uploader("Sube un archivo CSV:", type=["csv"])
             if uploaded_file is not None:
-                try:
-                    df_loaded = pd.read_csv(uploaded_file)
-                    st.session_state.multi_df = df_loaded
-                    st.session_state.multi_trained = False
-                    st.success("CSV cargado con éxito.")
-                except Exception as e:
-                    st.error(f"Error al leer CSV: {e}")
+                if "last_multi_source" not in st.session_state or st.session_state.last_multi_source != uploaded_file.name:
+                    try:
+                        df_loaded = pd.read_csv(uploaded_file)
+                        st.session_state.multi_df = df_loaded
+                        st.session_state.multi_trained = False
+                        st.session_state.multi_train_df = None
+                        st.session_state.multi_test_df = None
+                        st.session_state.multi_feature_stats = {}
+                        st.session_state.multi_train_message = None
+                        st.session_state.last_multi_source = uploaded_file.name
+                        st.success("CSV cargado con éxito.")
+                    except Exception as e:
+                        st.error(f"Error al leer CSV: {e}")
+
+        # Inicialización automática del split y estadísticas al cargar
+        if st.session_state.multi_df is not None and st.session_state.multi_train_df is None:
+            df_curr = st.session_state.multi_df
+            cols = list(df_curr.columns)
+            target_var = cols[-1]
+            features_vars = [c for c in cols if c != target_var]
+            
+            st.session_state.multi_target = target_var
+            st.session_state.multi_features = features_vars
+            
+            shuffled_df = df_curr.sample(frac=1, random_state=42).reset_index(drop=True)
+            split_idx = max(1, int(len(shuffled_df) * st.session_state.multi_split))
+            
+            st.session_state.multi_train_df = shuffled_df.iloc[:split_idx].reset_index(drop=True)
+            st.session_state.multi_test_df = shuffled_df.iloc[split_idx:].reset_index(drop=True)
+            
+            stats = {}
+            for col in features_vars:
+                if col in st.session_state.multi_train_df.columns:
+                    mean_val = st.session_state.multi_train_df[col].mean()
+                    std_val = st.session_state.multi_train_df[col].std()
+                    if std_val == 0 or np.isnan(std_val):
+                        std_val = 1.0
+                    stats[col] = {"mean": float(mean_val), "std": float(std_val)}
+            st.session_state.multi_feature_stats = stats
 
         st.write("---")
         
@@ -1090,7 +1136,7 @@ else:
                 else:
                     # Shuffle y Split
                     shuffled_df = df_curr.sample(frac=1, random_state=42).reset_index(drop=True)
-                    split_idx = int(len(shuffled_df) * st.session_state.multi_split)
+                    split_idx = max(1, int(len(shuffled_df) * st.session_state.multi_split))
                     
                     st.session_state.multi_train_df = shuffled_df.iloc[:split_idx].reset_index(drop=True)
                     st.session_state.multi_test_df = shuffled_df.iloc[split_idx:].reset_index(drop=True)
@@ -1098,14 +1144,15 @@ else:
                     # Calcular estadísticas de normalización Z-Score (en base al set de entrenamiento)
                     stats = {}
                     for col in features_vars:
-                        mean_val = st.session_state.multi_train_df[col].mean()
-                        std_val = st.session_state.multi_train_df[col].std()
+                        mean_val = float(st.session_state.multi_train_df[col].mean())
+                        std_val = float(st.session_state.multi_train_df[col].std())
                         if std_val == 0 or np.isnan(std_val):
                             std_val = 1.0 # Evitar división por cero
                         stats[col] = {"mean": mean_val, "std": std_val}
                     
                     st.session_state.multi_feature_stats = stats
                     st.session_state.multi_trained = False
+                    st.session_state.multi_train_message = None
                     st.success("Datos procesados y divididos correctamente.")
                     st.rerun()
 
@@ -1181,23 +1228,41 @@ else:
                 st.session_state.multi_cost_history = cost_history
                 st.session_state.multi_trained = True
 
-                # Mostrar resumen inmediato en la sidebar
-                st.success("Modelo entrenado exitosamente!")
-                st.markdown(f"""
-                **Resultados del Entrenamiento:**
-                - Épocas: `{multi_epochs}`
-                - Costo inicial: `{cost_history[0]:.5f}`
-                - Costo final: `{cost_history[-1]:.5f}`
-                - Features usadas: `{len(features)}`
-                """)
-
                 # Calcular accuracy rápida sobre el set de entrenamiento
                 probs_train = sigmoid(np.dot(X_train, weights) + bias)
                 preds_train = (probs_train >= 0.5).astype(int)
                 acc_train = np.mean(preds_train == y_train) * 100
-                st.info(f"Accuracy (Train): **{acc_train:.1f}%**")
-                st.markdown("Revisa las pestañas **Entrenamiento**, **Evaluación** y **Predicción** para ver los resultados completos.")
-        else:
+
+                st.session_state.multi_train_message = {
+                    "epochs": multi_epochs,
+                    "cost_init": float(cost_history[0]),
+                    "cost_final": float(cost_history[-1]),
+                    "features": len(features),
+                    "accuracy": float(acc_train)
+                }
+                st.rerun()
+
+        # Mostrar resumen si ya existe mensaje de entrenamiento guardado
+        if getattr(st.session_state, "multi_train_message", None) is not None:
+            msg = st.session_state.multi_train_message
+            if msg.get("imported"):
+                st.success("¡Modelo importado exitosamente!")
+                st.markdown(f"""
+                **Detalles del Modelo Importado:**
+                - Variables predictoras: `{msg['features']}`
+                """)
+            else:
+                st.success("¡Modelo entrenado exitosamente!")
+                st.markdown(f"""
+                **Resultados del Entrenamiento:**
+                - Épocas: `{msg['epochs']}`
+                - Costo inicial: `{msg['cost_init']:.5f}`
+                - Costo final: `{msg['cost_final']:.5f}`
+                - Features usadas: `{msg['features']}`
+                - Accuracy (Train): **{msg['accuracy']:.1f}%**
+                """)
+            st.info("Revisa las pestañas del módulo para ver los resultados detallados.")
+        elif st.session_state.multi_train_df is None:
             st.info("Primero procesa los datos para habilitar el entrenamiento.")
 
 
@@ -1253,6 +1318,10 @@ else:
                     if new_stats:
                         st.session_state.multi_feature_stats = new_stats
 
+                st.session_state.multi_train_message = {
+                    "imported": True,
+                    "features": len(st.session_state.multi_features)
+                }
                 st.success("Modelo e historial cargados exitosamente desde JSON.")
                 st.rerun()
             except Exception as e:
@@ -1377,89 +1446,224 @@ else:
 
     # PESTAÑA 2: ENTRENAMIENTO DEL MODELO
     with tab_train_multi:
-        if not st.session_state.multi_trained:
-            st.warning("El modelo aún no ha sido entrenado. Configura y entrena el modelo en la barra lateral.")
+        if st.session_state.multi_train_df is None:
+            st.warning("El set de datos no está listo. Configura y procesa los datos en la barra lateral.")
         else:
-            st.subheader("Curva de Pérdida del Entrenamiento (Log-Loss)")
+            st.subheader("Entrenamiento de Regresión Logística en Tiempo Real")
             st.markdown(
-                "La siguiente curva ilustra el comportamiento de la función de costo de Entropía Cruzada "
-                "a medida que transcurren las épocas de entrenamiento con Descenso de Gradiente."
+                "Observa de forma dinámica la optimización del modelo mediante **Descenso de Gradiente**. "
+                "La animación muestra cómo disminuye el costo Log-Loss y cómo se ajustan los coeficientes (pesos) de cada variable."
             )
-            
-            cost_history = st.session_state.multi_cost_history
-            fig_loss_multi = go.Figure()
-            fig_loss_multi.add_trace(go.Scatter(
-                x=list(range(1, len(cost_history) + 1)),
-                y=cost_history,
-                mode="lines",
-                line=dict(color="#6366f1", width=2.5),
-                name="Log-Loss (Entropy)"
-            ))
-            fig_loss_multi.update_layout(
-                plot_bgcolor="#090d16",
-                paper_bgcolor="#090d16",
-                font=dict(color="white"),
-                xaxis=dict(title="Épocas", gridcolor="rgba(255, 255, 255, 0.05)"),
-                yaxis=dict(title="Costo (Log-Loss)", gridcolor="rgba(255, 255, 255, 0.05)"),
-                margin=dict(l=40, r=40, t=40, b=40),
-                height=350
-            )
-            st.plotly_chart(fig_loss_multi, use_container_width=True)
-            st.info(f"**Costo final en la última época:** `{cost_history[-1]:.5f}`")
 
-            st.write("---")
-            st.subheader("Coeficientes y Pesos del Modelo")
-            st.markdown("Pesos entrenados para cada variable predictora (Features) y sesgo del modelo:")
+            st.markdown(f"""
+            **Configuración Actual:**
+            *   Tasa de Aprendizaje ($\alpha$): `{multi_lr}`
+            *   Iteraciones (Épocas): `{multi_epochs}`
+            *   Variables Independientes (Features): `{', '.join(st.session_state.multi_features)}`
+            """)
+
+            col_ctrl_multi, col_plots_multi = st.columns([1, 2])
             
-            features = st.session_state.multi_features
-            weights = st.session_state.multi_weights
-            bias = st.session_state.multi_bias
-            
-            coef_data = []
-            for col, w in zip(features, weights):
-                # Interpretación en lenguaje natural
-                if abs(w) < 0.1:
-                    interpretation = "Bajo impacto predictivo sobre la clase final."
-                elif w > 0:
-                    interpretation = f"El incremento de {col} incrementa la probabilidad de ser Clase 1."
-                else:
-                    interpretation = f"El incremento de {col} reduce la probabilidad de ser Clase 1."
+            with col_ctrl_multi:
+                st.write("**Control del Entrenamiento**")
+                btn_play_multi = st.button("Iniciar Animación de Entrenamiento", key="btn_play_multi_tab", use_container_width=True)
                 
-                coef_data.append({
-                    "Variable (Feature)": col,
-                    "Peso (Weight)": round(w, 4),
-                    "Interpretación": interpretation
-                })
-            
-            st.table(pd.DataFrame(coef_data))
-            st.info(f"**Valor del Sesgo (Bias / Intercepto):** `{bias:.4f}`")
+                status_txt_multi = st.empty()
+                metrics_txt_multi = st.empty()
+                
+            with col_plots_multi:
+                plot_loss_placeholder = st.empty()
+                plot_weights_placeholder = st.empty()
 
-            # Exportar Modelo JSON
-            st.write("---")
-            st.subheader("Exportar Modelo Entrenado")
-            st.markdown("Guarda el estado actual del modelo (pesos, bias, variables y estadísticas) en un archivo JSON local.")
-            
-            # Construir JSON
-            export_data = {
-                "modelWeights": weights,
-                "modelBias": bias,
-                "features": features,
-                "targetCol": st.session_state.multi_target,
-                "featureStats": st.session_state.multi_feature_stats,
-                "columns": list(st.session_state.multi_df.columns),
-                "rawData": st.session_state.multi_df.to_dict(orient="records") if st.session_state.multi_df is not None else None,
-                "trainData": st.session_state.multi_train_df.to_dict(orient="records") if st.session_state.multi_train_df is not None else None,
-                "testData": st.session_state.multi_test_df.to_dict(orient="records") if st.session_state.multi_test_df is not None else None,
-            }
-            json_str = json.dumps(export_data, indent=2)
-            
-            st.download_button(
-                label="Descargar Modelo (.json)",
-                data=json_str,
-                file_name=f"modelo_logistico_{st.session_state.multi_target}.json",
-                mime="application/json",
-                use_container_width=True
-            )
+            if btn_play_multi:
+                train_data = st.session_state.multi_train_df
+                features = st.session_state.multi_features
+                target = st.session_state.multi_target
+                stats = st.session_state.multi_feature_stats
+                
+                # Normalizar set de entrenamiento
+                X_train = np.zeros((len(train_data), len(features)))
+                for idx, col in enumerate(features):
+                    mean_val = stats[col].get("mean", 0)
+                    std_val = stats[col].get("std", 1)
+                    if std_val == 0 or np.isnan(std_val):
+                        std_val = 1.0
+                    X_train[:, idx] = (train_data[col].values - mean_val) / std_val
+                
+                y_train = train_data[target].values
+                if len(np.unique(y_train)) > 2 or not set(np.unique(y_train)).issubset({0, 1}):
+                    mean_y = y_train.mean()
+                    y_train = (y_train > mean_y).astype(int)
+
+                m_count, n_count = X_train.shape
+                w = np.zeros(n_count)
+                b = 0.0
+                cost_history = []
+                epochs_list = []
+                
+                # Intervalo de actualización para que la animación sea fluida pero rápida
+                update_interval = max(1, multi_epochs // 40)
+                
+                for epoch in range(1, multi_epochs + 1):
+                    z = np.dot(X_train, w) + b
+                    a = sigmoid(z)
+                    a_clip = np.clip(a, 1e-15, 1.0 - 1e-15)
+                    cost = -(1 / m_count) * np.sum(y_train * np.log(a_clip) + (1.0 - y_train) * np.log(1.0 - a_clip))
+                    cost_history.append(cost)
+                    epochs_list.append(epoch)
+                    
+                    dz = a - y_train
+                    dw = (1 / m_count) * np.dot(X_train.T, dz)
+                    db = (1 / m_count) * np.sum(dz)
+                    
+                    w -= multi_lr * dw
+                    b -= multi_lr * db
+
+                    if epoch % update_interval == 0 or epoch == multi_epochs:
+                        # Calcular exactitud del paso actual
+                        preds_step = (a >= st.session_state.multi_threshold).astype(int)
+                        acc_step = np.mean(preds_step == y_train) * 100.0
+                        
+                        status_txt_multi.markdown(f"**Estado:** Entrenamiento en Curso (Época `{epoch}/{multi_epochs}`)")
+                        metrics_txt_multi.markdown(f"""
+                        *   **Costo Actual (Log-Loss):** `{cost:.5f}`
+                        *   **Precisión Entrenamiento:** `{acc_step:.1f}%`
+                        *   **Intercepto (Bias):** `{b:.4f}`
+                        """)
+
+                        # Gráfico de Pérdida en tiempo real
+                        fig_loss = go.Figure()
+                        fig_loss.add_trace(go.Scatter(
+                            x=epochs_list, y=cost_history,
+                            mode="lines",
+                            line=dict(color="#6366f1", width=2.5),
+                            name="Log-Loss"
+                        ))
+                        fig_loss.update_layout(
+                            plot_bgcolor="#090d16",
+                            paper_bgcolor="#090d16",
+                            font=dict(color="white", size=8),
+                            xaxis=dict(title="Épocas", gridcolor="rgba(255, 255, 255, 0.05)"),
+                            yaxis=dict(title="Costo", gridcolor="rgba(255, 255, 255, 0.05)"),
+                            margin=dict(l=20, r=20, t=20, b=20),
+                            height=220
+                        )
+                        plot_loss_placeholder.plotly_chart(fig_loss, use_container_width=True)
+
+                        # Gráfico de barras de pesos en tiempo real
+                        fig_w = go.Figure()
+                        fig_w.add_trace(go.Bar(
+                            x=features,
+                            y=w,
+                            marker_color=["#10b981" if val >= 0 else "#f43f5e" for val in w],
+                            name="Pesos (Weights)"
+                        ))
+                        fig_w.update_layout(
+                            plot_bgcolor="#090d16",
+                            paper_bgcolor="#090d16",
+                            font=dict(color="white", size=8),
+                            xaxis=dict(title="Características", gridcolor="rgba(255, 255, 255, 0.05)"),
+                            yaxis=dict(title="Peso del Coeficiente", gridcolor="rgba(255, 255, 255, 0.05)"),
+                            margin=dict(l=20, r=20, t=20, b=20),
+                            height=220
+                        )
+                        plot_weights_placeholder.plotly_chart(fig_w, use_container_width=True)
+                        
+                        time.sleep(0.01)
+
+                st.session_state.multi_weights = list(w)
+                st.session_state.multi_bias = float(b)
+                st.session_state.multi_cost_history = cost_history
+                st.session_state.multi_trained = True
+                
+                # Guardar el mensaje de éxito
+                preds_final = (sigmoid(np.dot(X_train, w) + b) >= 0.5).astype(int)
+                acc_final = np.mean(preds_final == y_train) * 100.0
+                st.session_state.multi_train_message = {
+                    "epochs": multi_epochs,
+                    "cost_init": float(cost_history[0]),
+                    "cost_final": float(cost_history[-1]),
+                    "features": len(features),
+                    "accuracy": float(acc_final)
+                }
+                
+                status_txt_multi.success("🎉 **¡Entrenamiento completado con éxito!**")
+                st.rerun()
+
+            elif st.session_state.multi_trained:
+                # Mostrar resultados finales estáticos
+                cost_history = st.session_state.multi_cost_history
+                fig_loss_multi = go.Figure()
+                fig_loss_multi.add_trace(go.Scatter(
+                    x=list(range(1, len(cost_history) + 1)),
+                    y=cost_history,
+                    mode="lines",
+                    line=dict(color="#6366f1", width=2.5),
+                    name="Log-Loss"
+                ))
+                fig_loss_multi.update_layout(
+                    plot_bgcolor="#090d16",
+                    paper_bgcolor="#090d16",
+                    font=dict(color="white"),
+                    xaxis=dict(title="Épocas", gridcolor="rgba(255, 255, 255, 0.05)"),
+                    yaxis=dict(title="Costo (Log-Loss)", gridcolor="rgba(255, 255, 255, 0.05)"),
+                    margin=dict(l=40, r=40, t=40, b=40),
+                    height=350
+                )
+                st.plotly_chart(fig_loss_multi, use_container_width=True)
+                st.info(f"**Costo final en la última época:** `{cost_history[-1]:.5f}`")
+
+                st.write("---")
+                st.subheader("Coeficientes y Pesos del Modelo")
+                st.markdown("Pesos entrenados para cada variable predictora (Features) y sesgo del modelo:")
+                
+                features = st.session_state.multi_features
+                weights = st.session_state.multi_weights
+                bias = st.session_state.multi_bias
+                
+                coef_data = []
+                for col, w in zip(features, weights):
+                    if abs(w) < 0.1:
+                        interpretation = "Bajo impacto predictivo sobre la clase final."
+                    elif w > 0:
+                        interpretation = f"El incremento de {col} incrementa la probabilidad de ser Clase 1."
+                    else:
+                        interpretation = f"El incremento de {col} reduce la probabilidad de ser Clase 1."
+                    
+                    coef_data.append({
+                        "Variable (Feature)": col,
+                        "Peso (Weight)": round(w, 4),
+                        "Interpretación": interpretation
+                    })
+                
+                st.table(pd.DataFrame(coef_data))
+                st.info(f"**Valor del Sesgo (Bias / Intercepto):** `{bias:.4f}`")
+
+                # Exportar Modelo JSON
+                st.write("---")
+                st.subheader("Exportar Modelo Entrenado")
+                st.markdown("Guarda el estado actual del modelo (pesos, bias, variables y estadísticas) en un archivo JSON local.")
+                
+                export_data = {
+                    "modelWeights": weights,
+                    "modelBias": bias,
+                    "features": features,
+                    "targetCol": st.session_state.multi_target,
+                    "featureStats": st.session_state.multi_feature_stats,
+                    "columns": list(st.session_state.multi_df.columns),
+                    "rawData": st.session_state.multi_df.to_dict(orient="records") if st.session_state.multi_df is not None else None,
+                    "trainData": st.session_state.multi_train_df.to_dict(orient="records") if st.session_state.multi_train_df is not None else None,
+                    "testData": st.session_state.multi_test_df.to_dict(orient="records") if st.session_state.multi_test_df is not None else None,
+                }
+                json_str = json.dumps(export_data, indent=2)
+                
+                st.download_button(
+                    label="Descargar Modelo (.json)",
+                    data=json_str,
+                    file_name=f"modelo_logistico_{st.session_state.multi_target}.json",
+                    mime="application/json",
+                    use_container_width=True
+                )
 
     # PESTAÑA 3: EVALUACIÓN DE DESEMPEÑO
     with tab_eval_multi:
