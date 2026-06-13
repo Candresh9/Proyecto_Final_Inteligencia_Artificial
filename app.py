@@ -268,46 +268,6 @@ if "multi_trained" not in st.session_state:
 if "multi_threshold" not in st.session_state:
     st.session_state.multi_threshold = 0.50
 
-# Load default multivariate model ONLY on first app load
-if "_model_json_loaded" not in st.session_state:
-    st.session_state._model_json_loaded = False
-
-model_path = "multivariate_logistic_model.json"
-if os.path.isfile(model_path) and not st.session_state._model_json_loaded:
-    try:
-        with open(model_path, "r", encoding="utf-8") as f:
-            model_data = json.load(f)
-        st.session_state.multi_weights = np.array(model_data.get("modelWeights", []))
-        st.session_state.multi_bias = model_data.get("modelBias", 0.0)
-        st.session_state.multi_features = model_data.get("features", [])
-        st.session_state.multi_target = model_data.get("targetCol", "label")
-        st.session_state.multi_feature_stats = model_data.get("featureStats", {})
-        st.session_state.multi_trained = True
-        st.session_state._model_json_loaded = True
-
-        # Load rawData
-        raw_rows = model_data.get("rawData", [])
-        if raw_rows:
-            st.session_state.multi_df = pd.DataFrame(raw_rows)
-
-            # Split into train/test if not provided
-            train_rows = model_data.get("trainData", [])
-            test_rows  = model_data.get("testData", [])
-            if train_rows:
-                st.session_state.multi_train_df = pd.DataFrame(train_rows)
-            if test_rows:
-                st.session_state.multi_test_df = pd.DataFrame(test_rows)
-
-            if not train_rows or not test_rows:
-                raw_df = st.session_state.multi_df.sample(frac=1, random_state=42).reset_index(drop=True)
-                split_idx = max(1, int(len(raw_df) * st.session_state.multi_split))
-                if not train_rows:
-                    st.session_state.multi_train_df = raw_df.iloc[:split_idx].reset_index(drop=True)
-                if not test_rows:
-                    st.session_state.multi_test_df = raw_df.iloc[split_idx:].reset_index(drop=True)
-    except Exception as e:
-        pass  # Silently skip if the model file is malformed
-
 
 # ============================================================================
 # SELECTOR DE MÓDULO PRINCIPAL
