@@ -6,6 +6,7 @@ import time
 import plotly.graph_objects as go
 import io
 import json
+import os
 
 # ============================================================================
 # CONFIGURACIÓN DE PÁGINA Y ESTILOS
@@ -157,6 +158,26 @@ PRESETS = {
 def sigmoid(z):
     return 1.0 / (1.0 + np.exp(-np.clip(z, -500, 500)))
 
+def predict_probabilities(X, weights, bias):
+    """Return probability predictions for logistic regression.
+
+    Parameters
+    ----------
+    X : np.ndarray
+        Feature matrix (samples x features).
+    weights : np.ndarray
+        Model coefficients.
+    bias : float
+        Intercept term.
+
+    Returns
+    -------
+    np.ndarray
+        Probabilities in the range [0, 1].
+    """
+    linear = np.dot(X, weights) + bias
+    return sigmoid(linear)
+
 def train_logistic_regression(X_train, y_train, learning_rate, epochs):
     m, n = X_train.shape
     weights = np.zeros(n)
@@ -246,6 +267,43 @@ if "multi_trained" not in st.session_state:
     st.session_state.multi_trained = False
 if "multi_threshold" not in st.session_state:
     st.session_state.multi_threshold = 0.50
+
+# Load default multivariate model if available
+model_path = "multivariate_logistic_model.json"
+if os.path.isfile(model_path) and not st.session_state.multi_trained:
+    try:
+        with open(model_path, "r", encoding="utf-8") as f:
+            model_data = json.load(f)
+        st.session_state.multi_weights = np.array(model_data.get("modelWeights", []))
+        st.session_state.multi_bias = model_data.get("modelBias", 0.0)
+        st.session_state.multi_features = model_data.get("features", [])
+        st.session_state.multi_target = model_data.get("targetCol", "label")
+        st.session_state.multi_feature_stats = model_data.get("featureStats", {})
+        st.session_state.multi_trained = True
+
+        # Load rawData
+        raw_rows = model_data.get("rawData", [])
+        if raw_rows:
+            st.session_state.multi_df = pd.DataFrame(raw_rows)
+
+            # Split into train/test if not provided
+            train_rows = model_data.get("trainData", [])
+            test_rows  = model_data.get("testData", [])
+            if train_rows:
+                st.session_state.multi_train_df = pd.DataFrame(train_rows)
+            if test_rows:
+                st.session_state.multi_test_df = pd.DataFrame(test_rows)
+
+            if not train_rows or not test_rows:
+                raw_df = st.session_state.multi_df.sample(frac=1, random_state=42).reset_index(drop=True)
+                split_idx = max(1, int(len(raw_df) * st.session_state.multi_split))
+                if not train_rows:
+                    st.session_state.multi_train_df = raw_df.iloc[:split_idx].reset_index(drop=True)
+                if not test_rows:
+                    st.session_state.multi_test_df = raw_df.iloc[split_idx:].reset_index(drop=True)
+    except Exception as e:
+        pass  # Silently skip if the model file is malformed
+
 
 # ============================================================================
 # SELECTOR DE MÓDULO PRINCIPAL
@@ -1100,10 +1158,20 @@ else:
                 target = st.session_state.multi_target
                 stats = st.session_state.multi_feature_stats
                 
-                # Normalizar set de entrenamiento Z-Score
+                # Normalizar set de entrenamiento Z-Score con verificación de columnas
                 X_train = np.zeros((len(train_data), len(features)))
                 for idx, col in enumerate(features):
-                    X_train[:, idx] = (train_data[col].values - stats[col]["mean"]) / stats[col]["std"]
+                    if col not in train_data.columns:
+                        st.error(f"Columna '{col}' no encontrada en los datos de entrenamiento.")
+                        st.stop()
+                    if col not in stats:
+                        st.error(f"Estadísticas para la columna '{col}' no encontradas.")
+                        st.stop()
+                    mean_val = stats[col].get("mean", 0)
+                    std_val = stats[col].get("std", 1)
+                    if std_val == 0 or np.isnan(std_val):
+                        std_val = 1.0  # Evitar división por cero
+                    X_train[:, idx] = (train_data[col].values - mean_val) / std_val
                 
                 # Binarizar el Target basado en la media si no es binario crudo
                 y_train = train_data[target].values
@@ -1137,18 +1205,48 @@ else:
                 st.session_state.multi_target = model_data["targetCol"]
                 st.session_state.multi_feature_stats = model_data["featureStats"]
                 st.session_state.multi_trained = True
-                
-                if "rawData" in model_data:
+
+                # Load rawData as the main DataFrame
+                if "rawData" in model_data and len(model_data["rawData"]) > 0:
                     st.session_state.multi_df = pd.DataFrame(model_data["rawData"])
-                if "trainData" in model_data:
+
+                # Load trainData / testData — if empty, split rawData instead
+                has_train = "trainData" in model_data and len(model_data["trainData"]) > 0
+                has_test  = "testData"  in model_data and len(model_data["testData"])  > 0
+
+                if has_train:
                     st.session_state.multi_train_df = pd.DataFrame(model_data["trainData"])
-                if "testData" in model_data:
+                if has_test:
                     st.session_state.multi_test_df = pd.DataFrame(model_data["testData"])
-                    
+
+                # Fallback: split rawData when train/test are missing or empty
+                if (not has_train or not has_test) and st.session_state.multi_df is not None:
+                    raw_df = st.session_state.multi_df.sample(frac=1, random_state=42).reset_index(drop=True)
+                    split_idx = max(1, int(len(raw_df) * st.session_state.multi_split))
+                    if not has_train:
+                        st.session_state.multi_train_df = raw_df.iloc[:split_idx].reset_index(drop=True)
+                    if not has_test:
+                        st.session_state.multi_test_df = raw_df.iloc[split_idx:].reset_index(drop=True)
+
+                    # Recompute feature stats from training data
+                    features_list = st.session_state.multi_features
+                    train_df = st.session_state.multi_train_df
+                    new_stats = {}
+                    for feat in features_list:
+                        if feat in train_df.columns:
+                            m_val = train_df[feat].mean()
+                            s_val = train_df[feat].std()
+                            if s_val == 0 or np.isnan(s_val):
+                                s_val = 1.0
+                            new_stats[feat] = {"mean": float(m_val), "std": float(s_val)}
+                    if new_stats:
+                        st.session_state.multi_feature_stats = new_stats
+
                 st.success("Modelo e historial cargados exitosamente desde JSON.")
                 st.rerun()
             except Exception as e:
                 st.error(f"Error al cargar archivo JSON: {e}")
+
 
     # PESTAÑAS DEL MÓDULO 2
     tab_data_multi, tab_train_multi, tab_eval_multi, tab_pred_multi = st.tabs([
@@ -1367,10 +1465,20 @@ else:
             bias = st.session_state.multi_bias
             t_val = st.session_state.multi_threshold
             
-            # Normalizar set de prueba Z-Score
+            # Normalizar set de prueba Z-Score con verificación de columnas
             X_test = np.zeros((len(test_data), len(features)))
             for idx, col in enumerate(features):
-                X_test[:, idx] = (test_data[col].values - stats[col]["mean"]) / stats[col]["std"]
+                if col not in test_data.columns:
+                    st.error(f"Columna '{col}' no encontrada en los datos de prueba.")
+                    st.stop()
+                if col not in stats:
+                    st.error(f"Estadísticas para la columna '{col}' no encontradas.")
+                    st.stop()
+                mean_val = stats[col].get("mean", 0)
+                std_val = stats[col].get("std", 1)
+                if std_val == 0 or np.isnan(std_val):
+                    std_val = 1.0
+                X_test[:, idx] = (test_data[col].values - mean_val) / std_val
                 
             y_test = test_data[target].values
             if len(np.unique(y_test)) > 2 or not set(np.unique(y_test)).issubset({0, 1}):
