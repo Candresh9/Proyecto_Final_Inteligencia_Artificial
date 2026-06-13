@@ -268,9 +268,12 @@ if "multi_trained" not in st.session_state:
 if "multi_threshold" not in st.session_state:
     st.session_state.multi_threshold = 0.50
 
-# Load default multivariate model if available
+# Load default multivariate model ONLY on first app load
+if "_model_json_loaded" not in st.session_state:
+    st.session_state._model_json_loaded = False
+
 model_path = "multivariate_logistic_model.json"
-if os.path.isfile(model_path) and not st.session_state.multi_trained:
+if os.path.isfile(model_path) and not st.session_state._model_json_loaded:
     try:
         with open(model_path, "r", encoding="utf-8") as f:
             model_data = json.load(f)
@@ -280,6 +283,7 @@ if os.path.isfile(model_path) and not st.session_state.multi_trained:
         st.session_state.multi_target = model_data.get("targetCol", "label")
         st.session_state.multi_feature_stats = model_data.get("featureStats", {})
         st.session_state.multi_trained = True
+        st.session_state._model_json_loaded = True
 
         # Load rawData
         raw_rows = model_data.get("rawData", [])
