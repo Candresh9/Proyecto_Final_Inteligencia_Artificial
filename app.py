@@ -1129,8 +1129,13 @@ else:
                         st.error(f"Columna '{col}' no encontrada en los datos de entrenamiento.")
                         st.stop()
                     if col not in stats:
-                        st.error(f"Estadísticas para la columna '{col}' no encontradas.")
-                        st.stop()
+                        # Compute stats on the fly if missing
+                        m_val = train_data[col].mean()
+                        s_val = train_data[col].std()
+                        if s_val == 0 or np.isnan(s_val):
+                            s_val = 1.0
+                        stats[col] = {"mean": float(m_val), "std": float(s_val)}
+                        st.session_state.multi_feature_stats = stats
                     mean_val = stats[col].get("mean", 0)
                     std_val = stats[col].get("std", 1)
                     if std_val == 0 or np.isnan(std_val):
@@ -1142,17 +1147,59 @@ else:
                 if len(np.unique(y_train)) > 2 or not set(np.unique(y_train)).issubset({0, 1}):
                     mean_y = y_train.mean()
                     y_train = (y_train > mean_y).astype(int)
-                    
-                weights, bias, cost_history = train_logistic_regression(X_train, y_train, multi_lr, multi_epochs)
+
+                # Entrenar con barra de progreso visible
+                progress_bar = st.progress(0, text="Entrenando modelo...")
+                m_count, n_count = X_train.shape
+                w = np.zeros(n_count)
+                b = 0.0
+                cost_history = []
+
+                for epoch in range(multi_epochs):
+                    z = np.dot(X_train, w) + b
+                    a = sigmoid(z)
+                    a_clip = np.clip(a, 1e-15, 1.0 - 1e-15)
+                    cost = -(1 / m_count) * np.sum(y_train * np.log(a_clip) + (1.0 - y_train) * np.log(1.0 - a_clip))
+                    cost_history.append(cost)
+                    dz = a - y_train
+                    dw = (1 / m_count) * np.dot(X_train.T, dz)
+                    db = (1 / m_count) * np.sum(dz)
+                    w -= multi_lr * dw
+                    b -= multi_lr * db
+
+                    # Actualizar barra cada 5% de progreso
+                    if epoch % max(1, multi_epochs // 20) == 0 or epoch == multi_epochs - 1:
+                        pct = (epoch + 1) / multi_epochs
+                        progress_bar.progress(pct, text=f"Época {epoch+1}/{multi_epochs} — Costo: {cost:.5f}")
+
+                progress_bar.progress(1.0, text="Entrenamiento completado!")
                 
+                weights = w
+                bias = b
                 st.session_state.multi_weights = list(weights)
                 st.session_state.multi_bias = float(bias)
                 st.session_state.multi_cost_history = cost_history
                 st.session_state.multi_trained = True
-                st.success("¡Modelo de Regresión Logística entrenado con éxito!")
-                st.rerun()
+
+                # Mostrar resumen inmediato en la sidebar
+                st.success("Modelo entrenado exitosamente!")
+                st.markdown(f"""
+                **Resultados del Entrenamiento:**
+                - Épocas: `{multi_epochs}`
+                - Costo inicial: `{cost_history[0]:.5f}`
+                - Costo final: `{cost_history[-1]:.5f}`
+                - Features usadas: `{len(features)}`
+                """)
+
+                # Calcular accuracy rápida sobre el set de entrenamiento
+                probs_train = sigmoid(np.dot(X_train, weights) + bias)
+                preds_train = (probs_train >= 0.5).astype(int)
+                acc_train = np.mean(preds_train == y_train) * 100
+                st.info(f"Accuracy (Train): **{acc_train:.1f}%**")
+                st.markdown("Revisa las pestañas **Entrenamiento**, **Evaluación** y **Predicción** para ver los resultados completos.")
         else:
             st.info("Primero procesa los datos para habilitar el entrenamiento.")
+
 
         st.subheader("Umbral de Clasificación")
         st.session_state.multi_threshold = st.slider("Umbral de Decisión (T):", 0.00, 1.00, 0.50, 0.01, key="threshold_multi_slider")
